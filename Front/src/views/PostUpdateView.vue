@@ -83,21 +83,20 @@ const onSubmitUpdateBlog = async (): Promise<void> => {
 
     if (response instanceof Response) {
       const result: BlogUpdateResponse = await response.json();
-      if (result.state) {
-        alert("수정 성공, 상세화면으로 넘어갑니다");
-        moveToDetail(result.blog_id);
-      } else {
-        throw new Error(result.message);
-      }
+      if (!result.state) throw new Error(result.message);
+
+      if (result.isRenew) auth.setToken(result.accessToken);
+      alert("수정 성공, 상세화면으로 넘어갑니다");
+      moveToDetail(result.blog_id);
     } else {
       throw new Error(response.message);
     }
   } catch (err) {
     if (err instanceof Error) {
-      alert(err.message);
-    } else {
       isError.value = true;
-      errorMessage.value = "알 수 없는 오류가 발생했습니다";
+      errorMessage.value = err.message;
+    } else {
+      alert("어떤 예외사항인지 모르겠어요!" + err);
     }
   }
 };

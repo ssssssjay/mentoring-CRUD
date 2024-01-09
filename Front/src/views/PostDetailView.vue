@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { unLoginGet, verifiedDelete } from "@/utils/customFetch";
 
-import type { BlogDetailResponse } from "../types/Responses";
+import type { BlogDetailResponse, BlogDeleteResponse } from "../types/Responses";
 import type { BlogData } from "../types/Blog";
 
 const router = useRouter();
@@ -18,11 +18,11 @@ const errorMessage = ref("");
 const token = auth.token;
 
 const blogData: BlogData = reactive({
-  blog_id: null,
-  blog_title: null,
-  blog_content: null,
-  login_id: null,
-  createdAt: null,
+  blog_id: undefined,
+  blog_title: undefined,
+  blog_content: undefined,
+  login_id: undefined,
+  createdAt: undefined,
 });
 
 const getBlogDetail = async (id: string): Promise<void> => {
@@ -30,23 +30,21 @@ const getBlogDetail = async (id: string): Promise<void> => {
     const response = await unLoginGet(`/blog/${id}`);
     if (response instanceof Response) {
       const result: BlogDetailResponse = await response.json();
-      if (result.state) {
-        const { blog_id, blog_title, blog_content, login_id, createdAt } = result.blogData;
-        blogData.blog_id = blog_id;
-        blogData.blog_title = blog_title;
-        blogData.blog_content = blog_content;
-        blogData.login_id = login_id;
-        blogData.createdAt = createdAt;
-      } else {
-        isError.value = true;
-        errorMessage.value = result.message;
-      }
-    } else {
-      throw new Error(response.message);
+      if (!result.state) throw new Error(result.message);
+
+      const { blog_id, blog_title, blog_content, login_id, createdAt } = result.blogData;
+      blogData.blog_id = blog_id;
+      blogData.blog_title = blog_title;
+      blogData.blog_content = blog_content;
+      blogData.login_id = login_id;
+      blogData.createdAt = createdAt;
     }
   } catch (err) {
     if (err instanceof Error) {
-      alert(err.message);
+      isError.value = true;
+      errorMessage.value = err.message;
+    } else {
+      alert("어떤 예외사항인지 모르겠어요!" + err);
     }
   } finally {
     isLoading.value = false;
@@ -75,12 +73,11 @@ const onSubmitDelete = async (id: string) => {
 
   const response = await verifiedDelete(`/blog/${id}`, token);
   if (response instanceof Response) {
-    const result = await response.json();
-    if (result.state) {
-      moveToHome();
-    } else {
-      alert(result.message);
-    }
+    const result: BlogDeleteResponse = await response.json();
+    if (!result.state) alert(result.message);
+
+    if (result.isRenew) auth.setToken(result.accessToken);
+    moveToHome();
   } else {
     alert(response.message);
   }

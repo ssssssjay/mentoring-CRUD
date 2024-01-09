@@ -29,19 +29,18 @@ const getBlogList = async (page = 1): Promise<void> => {
 
     if (response instanceof Response) {
       const result: BlogListResponse = await response.json();
-      if (result.state) {
-        blogList.value = [];
-        for (const data of result.blogList) {
-          blogList.value.push(data);
-        }
-        blogCount.value = result.blogCount;
-      } else {
-        isError.value = true;
-        errorMessage.value = result.message;
+      if (!result.state) throw new Error(result.message);
+
+      blogCount.value = result.blogCount;
+      blogList.value = [];
+      for (const data of result.blogList) {
+        blogList.value.push(data);
       }
     }
   } catch (err) {
     if (err instanceof Error) {
+      isError.value = true;
+      errorMessage.value = err.message;
       alert(err.message);
     } else {
       alert("어떤 예외사항인지 모르겠어요!");
@@ -72,9 +71,9 @@ watch(current, (newCurrent) => {
       <q-spinner-ios size="32px" color="secondary" />
     </div>
     <div v-else-if="isError">{{ errorMessage }}</div>
-    <!-- <div v-else-if="blogList.length === 0" class="text-center text-none-post">
+    <div v-else-if="blogList.length === 0" class="text-center text-none-post">
       <strong>작성한 게시글이 없습니다 !</strong>
-    </div> -->
+    </div>
     <div v-else>
       <ul class="row q-gutter-md q-mb-lg">
         <PostCard

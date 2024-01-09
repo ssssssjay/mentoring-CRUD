@@ -16,15 +16,24 @@ type BlogDetailResponse = CommonResponse & {
 
 type BlogUpdateResponse = CommonResponse & {
   blog_id: string;
+  isRenew: boolean;
+  accessToken: string;
 };
 
 type BlogInsertResponse = CommonResponse & {
   blog_id: number;
+  isRenew: boolean;
+  accessToken: string;
 };
 
 type BlogListResponse = CommonResponse & {
   blogList: BlogData[];
   blogCount: number;
+};
+
+type BlogDeleteResponse = CommonResponse & {
+  isRenew: boolean;
+  accessToken: string;
 };
 
 export type {
@@ -34,4 +43,5 @@ export type {
   BlogUpdateResponse,
   BlogInsertResponse,
   BlogListResponse,
+  BlogDeleteResponse,
 };

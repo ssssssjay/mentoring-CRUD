@@ -30,23 +30,23 @@ const onInputField = (e: Event): void => {
 const onSubmitBlog = async (): Promise<void> => {
   try {
     const reqData = { blog_title: title.value, blog_content: content.value };
-    const token = auth.getUserData.token; // '' || 'tokenValue'
+    const token = auth.getUserData.token;
     const response = await verifiedPost("/blog", token, JSON.stringify(reqData));
 
     if (response instanceof Response) {
       const result: BlogInsertResponse = await response.json();
-      if (result.state) {
-        alert("게시 성공, 상세화면으로 넘어갑니다");
-        router.push(`/detail/${result.blog_id}`);
-      } else {
-        throw new Error(result.message);
-      }
+      if (!result.state) throw new Error(result.message);
+      if (result.isRenew) auth.setToken(result.accessToken);
+      alert("게시 성공, 상세화면으로 넘어갑니다");
+      router.push(`/detail/${result.blog_id}`);
+    } else {
+      throw new Error(response.message);
     }
   } catch (err) {
     if (err instanceof Error) {
       alert(err.message);
     } else {
-      alert("어떤 예외사항인지 모르겠어요!");
+      alert("어떤 예외사항인지 모르겠어요!" + err);
     }
   }
 };
