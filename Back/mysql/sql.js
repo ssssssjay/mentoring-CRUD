@@ -1,0 +1,15 @@
+module.exports = {
+  findUserById: "SELECT * FROM user WHERE login_id=?",
+  insertUser: "INSERT INTO user SET ?",
+  updateUser: "UPDATE user SET ? , createdAt=NOW() WHERE login_id=?",
+  insertBlog: "INSERT INTO blog SET ?",
+  updateBlog: "UPDATE blog SET ? , createdAt=NOW() WHERE blog_id=?",
+  deleteBlog: "DELETE FROM blog WHERE blog_id=?",
+  findBlogsByUserId: "SELECT * FROM blog WHERE login_id=?",
+  findBlogByBlogId: "SELECT * FROM blog WHERE blog_id=?",
+  findAllBlogs: "SELECT * FROM blog",
+  findBlogsByLimit: "SELECT * FROM blog ORDER BY blog_id DESC LIMIT ? OFFSET ?",
+  findLoginIdByBlogId: "SELECT login_id FROM blog WHERE blog_id=?",
+  getBlogsCount: "SELECT COUNT(*) AS blog_count FROM blog",
+  logoutUser: "UPDATE user SET refresh_token = NULL WHERE login_id = ?",
+};
