@@ -1,6 +1,7 @@
 const express = require("express");
 const mysql = require("../mysql");
 const { checkAuthorization } = require("../middlewares/auth");
+const { verifyToken } = require("../util/tokenUtil");
 
 const router = express.Router();
 
@@ -38,11 +39,18 @@ router.get("/:id", async (req, res) => {
 
 router.post("/", checkAuthorization, async (req, res) => {
   try {
-    const blogData = { login_id: req.verifiedToken.loginId, ...req.body };
+    const verifiedToken = verifyToken(req.accessToken);
+    const blogData = { login_id: verifiedToken.loginId, ...req.body };
     const insertBlogRes = await mysql.query("insertBlog", blogData);
     if (!insertBlogRes.affectedRows) throw new Error("게시글 저장에 실패했습니다. 다시 시도해주세요");
 
-    res.status(201).json({ state: true, message: "게시글 등록에 성공했습니다", blog_id: insertBlogRes.insertId });
+    res.status(201).json({
+      state: true,
+      message: "게시글 등록에 성공했습니다",
+      blog_id: insertBlogRes.insertId,
+      accessToken: req.accessToken,
+      isRenew: req.isRenew,
+    });
   } catch (err) {
     res.status(400).json({ state: false, message: err.message });
   }
@@ -51,14 +59,22 @@ router.post("/", checkAuthorization, async (req, res) => {
 router.patch("/:id", checkAuthorization, async (req, res) => {
   try {
     const { id } = req.params;
+    const verifiedToken = verifyToken(req.accessToken);
+
     const [{ login_id: writer }] = await mysql.query("findLoginIdByBlogId", id);
-    const { loginId: currentUser } = req.verifiedToken;
+    const { loginId: currentUser } = verifiedToken;
     if (writer !== currentUser) throw new Error("게시글을 수정할 권한이 없습니다.");
     const updatedData = req.body;
     const updateBlogRes = await mysql.query("updateBlog", [updatedData, id]);
     if (!updateBlogRes.affectedRows) throw new Error("게시글 수정에 실패했습니다. 다시 시도해주세요");
 
-    res.status(201).json({ state: true, message: "게시글 수정에 성공했습니다", blog_id: id });
+    res.status(201).json({
+      state: true,
+      message: "게시글 수정에 성공했습니다",
+      blog_id: id,
+      accessToken: req.accessToken,
+      isRenew: req.isRenew,
+    });
   } catch (err) {
     res.status(400).json({ state: false, message: err.message });
   }
@@ -67,14 +83,18 @@ router.patch("/:id", checkAuthorization, async (req, res) => {
 router.delete("/:id", checkAuthorization, async (req, res) => {
   try {
     const { id } = req.params;
+    const verifiedToken = verifyToken(req.accessToken);
+
     const [{ login_id: writer }] = await mysql.query("findLoginIdByBlogId", id);
-    const { loginId: currentUser } = req.verifiedToken;
+    const { loginId: currentUser } = verifiedToken;
     if (writer !== currentUser) throw new Error("게시글을 삭제할 권한이 없습니다.");
     const deleteBlogRes = await mysql.query("deleteBlog", id);
 
     if (!deleteBlogRes.affectedRows) throw new Error("게시글 삭제에 실패했습니다. 다시 시도해주세요");
 
-    res.status(201).json({ state: true, message: "게시글 삭제에 성공했습니다" });
+    res
+      .status(201)
+      .json({ state: true, message: "게시글 삭제에 성공했습니다", accessToken: req.accessToken, isRenew: req.isRenew });
   } catch (err) {
     res.status(400).json({ state: false, message: err.message });
   }
